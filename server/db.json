@@ -1,0 +1,221 @@
+{
+  "users": [
+    {
+      "id": "demo-user-001",
+      "username": "demo",
+      "displayName": "Demo Manager",
+      "passwordHash": "$2a$10$74S9vN2di5KGWwsDOU4DxOCFvjIp.x/BoO2wDEeFCofLI/R5BgXKG",
+      "createdAt": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "cars": {
+    "demo-user-001": [
+      {
+        "id": "109d52be-9413-4989-8cd1-980e883b0f95",
+        "make": "Toyota",
+        "model": "Innova Crysta",
+        "year": 2024,
+        "plate": "KA-01-AB-1001",
+        "status": "available",
+        "dailyRate": 3500,
+        "category": "SUV",
+        "fuel": "Diesel",
+        "seats": 7,
+        "image": ""
+      },
+      {
+        "id": "1677d125-b24a-4522-9c8d-ad5a966695a2",
+        "make": "Hyundai",
+        "model": "Creta",
+        "year": 2024,
+        "plate": "KA-01-CD-2002",
+        "status": "booked",
+        "dailyRate": 2800,
+        "category": "SUV",
+        "fuel": "Petrol",
+        "seats": 5,
+        "image": ""
+      },
+      {
+        "id": "81679ded-3dfb-4837-902e-0f0b8f526727",
+        "make": "Maruti",
+        "model": "Swift Dzire",
+        "year": 2023,
+        "plate": "KA-01-EF-3003",
+        "status": "available",
+        "dailyRate": 1800,
+        "category": "Sedan",
+        "fuel": "Petrol",
+        "seats": 5,
+        "image": ""
+      },
+      {
+        "id": "c54e58a4-147e-46ed-871f-68797cc7d36c",
+        "make": "Honda",
+        "model": "City",
+        "year": 2023,
+        "plate": "KA-01-IJ-5005",
+        "status": "available",
+        "dailyRate": 2200,
+        "category": "Sedan",
+        "fuel": "Petrol",
+        "seats": 5,
+        "image": ""
+      },
+      {
+        "id": "50e75e27-299f-45e2-abb0-c18dcec9acab",
+        "make": "Kia",
+        "model": "Seltos",
+        "year": 2024,
+        "plate": "KA-01-KL-6006",
+        "status": "booked",
+        "dailyRate": 2600,
+        "category": "SUV",
+        "fuel": "Petrol",
+        "seats": 5,
+        "image": ""
+      },
+      {
+        "id": "73d4e920-edd8-401d-967b-0ab31e9725b7",
+        "make": "Tata",
+        "model": "Nexon EV",
+        "year": 2024,
+        "plate": "KA-01-MN-7007",
+        "status": "available",
+        "dailyRate": 3000,
+        "category": "SUV",
+        "fuel": "Electric",
+        "seats": 5,
+        "image": ""
+      },
+      {
+        "id": "6f2d78dc-8ca4-4ab5-a28e-ba3170f34b7f",
+        "make": "Toyota",
+        "model": "Fortuner",
+        "year": 2023,
+        "plate": "KA-01-OP-8008",
+        "status": "booked",
+        "dailyRate": 5500,
+        "category": "SUV",
+        "fuel": "Diesel",
+        "seats": 7,
+        "image": ""
+      },
+      {
+        "id": "b1dc8ad9-1fc0-40a4-add2-b31d0d089198",
+        "make": "Maruti",
+        "model": "Ertiga",
+        "year": 2023,
+        "plate": "KA-01-QR-9009",
+        "status": "available",
+        "dailyRate": 2400,
+        "category": "MPV",
+        "fuel": "Petrol",
+        "seats": 7,
+        "image": ""
+      },
+      {
+        "id": "73e47659-857d-4441-869d-e2a0b504f7dc",
+        "make": "Hyundai",
+        "model": "Verna",
+        "year": 2024,
+        "plate": "KA-01-ST-1010",
+        "status": "available",
+        "dailyRate": 2500,
+        "category": "Sedan",
+        "fuel": "Petrol",
+        "seats": 5,
+        "image": ""
+      },
+      {
+        "id": "08492d8d-4734-4dfd-b0ee-0694e4cd1b45",
+        "make": "BMW",
+        "model": "X5",
+        "year": "2024",
+        "plate": "KA-01-ZZ-9999",
+        "status": "available",
+        "dailyRate": "8000",
+        "category": "Sedan",
+        "fuel": "Petrol",
+        "seats": "5",
+        "image": ""
+      },
+      {
+        "id": "501a129b-4142-49dd-a15d-135c8a987078",
+        "make": "tata",
+        "model": "harrier",
+        "year": 2024,
+        "plate": "ap-1234",
+        "status": "booked",
+        "dailyRate": 2000,
+        "category": "Sedan",
+        "fuel": "Petrol",
+        "seats": 5,
+        "image": ""
+      }
+    ]
+  },
+  "bookings": {
+    "demo-user-001": [
+      {
+        "id": "38ace858-5c23-45c9-b49e-5675c184e72f",
+        "carId": "1677d125-b24a-4522-9c8d-ad5a966695a2",
+        "customerName": "Rajesh Kumar",
+        "customerPhone": "+91 98765 43210",
+        "startDate": "2026-02-20",
+        "endDate": "2026-02-27",
+        "totalAmount": 19600,
+        "status": "active",
+        "createdAt": "2026-02-20T09:00:00Z"
+      },
+      {
+        "id": "4ae08e1a-dbad-4dcb-9f87-2d5dc33b2355",
+        "carId": "50e75e27-299f-45e2-abb0-c18dcec9acab",
+        "customerName": "Priya Sharma",
+        "customerPhone": "+91 87654 32109",
+        "startDate": "2026-02-22",
+        "endDate": "2026-02-25",
+        "totalAmount": 7800,
+        "status": "active",
+        "createdAt": "2026-02-22T11:30:00Z"
+      },
+      {
+        "id": "06e66a81-046c-45e6-8a57-2b42a56db60f",
+        "carId": "6f2d78dc-8ca4-4ab5-a28e-ba3170f34b7f",
+        "customerName": "Amit Patel",
+        "customerPhone": "+91 76543 21098",
+        "startDate": "2026-02-18",
+        "endDate": "2026-02-28",
+        "totalAmount": 55000,
+        "status": "active",
+        "createdAt": "2026-02-18T14:00:00Z"
+      },
+      {
+        "id": "cb4e4a22-5aec-4090-a0aa-205ae057e802",
+        "carId": "501a129b-4142-49dd-a15d-135c8a987078",
+        "customerName": "tarun",
+        "customerPhone": "9959913288",
+        "startDate": "2026-02-26",
+        "endDate": "2026-02-27",
+        "totalAmount": 1900,
+        "discount": 5,
+        "discountAmount": 100,
+        "status": "active",
+        "createdAt": "2026-02-26T06:55:57.284Z"
+      },
+      {
+        "id": "26670484-577b-4f11-944f-9d4d18fd2ca6",
+        "carId": "73d4e920-edd8-401d-967b-0ab31e9725b7",
+        "customerName": "zion",
+        "customerPhone": "9959913288",
+        "startDate": "2026-02-26",
+        "endDate": "2026-02-27",
+        "totalAmount": 2850,
+        "discount": 5,
+        "discountAmount": 150,
+        "status": "completed",
+        "createdAt": "2026-02-26T06:57:44.090Z"
+      }
+    ]
+  }
+}
