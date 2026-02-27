@@ -1,9 +1,10 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { users, cars, bookings, ensureUser, saveData } = require('./data');
+const { users, cars, bookings, ensureUser, saveData, initDB } = require('./data');
 
 const app = express();
 const PORT = 3005;
@@ -151,4 +152,10 @@ app.put('/api/bookings/:id/complete', authMiddleware, (req, res) => {
     res.json({ ...booking, carName: car ? `${car.make} ${car.model}` : 'Unknown', carPlate: car ? car.plate : 'N/A' });
 });
 
-app.listen(PORT, () => console.log(`🚗 Zion Fleet API running at http://localhost:${PORT}`));
+
+initDB().then(() => {
+    app.listen(PORT, () => console.log(`🚗 Zion Fleet API running at http://localhost:${PORT}`));
+}).catch(err => {
+    console.error('❌ Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+});

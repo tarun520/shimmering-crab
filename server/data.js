@@ -1,10 +1,24 @@
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
-const path = require('path');
+const { MongoClient } = require('mongodb');
 
-const DATA_FILE = path.join(__dirname, 'db.json');
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+    console.error('❌ MONGODB_URI environment variable is not set!');
+    process.exit(1);
+}
 
+const client = new MongoClient(MONGODB_URI);
+let db;
+let usersCol, carsCol, bookingsCol;
+
+// Shared mutable objects — index.js holds references to these exact objects.
+// We MUST mutate them in-place (never reassign) so index.js references stay valid.
+const users = [];
+const cars = {};
+const bookings = {};
+
+// ─── Seed Data ────────────────────────────────────────────────
 function createSeedData() {
     const demoUserId = 'demo-user-001';
     const demoPasswordHash = bcrypt.hashSync('demo1234', 10);
@@ -29,51 +43,78 @@ function createSeedData() {
     };
     const seedBookings = {
         [demoUserId]: [
-            { id: uuidv4(), carId: carIds[1], customerName: 'Rajesh Kumar', customerPhone: '+91 98765 43210', startDate: '2026-02-20', endDate: '2026-02-27', totalAmount: 19600, status: 'active', createdAt: '2026-02-20T09:00:00Z' },
-            { id: uuidv4(), carId: carIds[5], customerName: 'Priya Sharma', customerPhone: '+91 87654 32109', startDate: '2026-02-22', endDate: '2026-02-25', totalAmount: 7800, status: 'active', createdAt: '2026-02-22T11:30:00Z' },
-            { id: uuidv4(), carId: carIds[7], customerName: 'Amit Patel', customerPhone: '+91 76543 21098', startDate: '2026-02-18', endDate: '2026-02-28', totalAmount: 55000, status: 'active', createdAt: '2026-02-18T14:00:00Z' },
+            { id: uuidv4(), carId: carIds[1], customerName: 'Rajesh Kumar', customerPhone: '+91 98765 43210', startDate: '2026-02-20', endDate: '2026-02-27', totalAmount: 19600, discount: 0, discountAmount: 0, status: 'active', createdAt: '2026-02-20T09:00:00Z' },
+            { id: uuidv4(), carId: carIds[5], customerName: 'Priya Sharma', customerPhone: '+91 87654 32109', startDate: '2026-02-22', endDate: '2026-02-25', totalAmount: 7800, discount: 0, discountAmount: 0, status: 'active', createdAt: '2026-02-22T11:30:00Z' },
+            { id: uuidv4(), carId: carIds[7], customerName: 'Amit Patel', customerPhone: '+91 76543 21098', startDate: '2026-02-18', endDate: '2026-02-28', totalAmount: 55000, discount: 0, discountAmount: 0, status: 'active', createdAt: '2026-02-18T14:00:00Z' },
         ]
     };
     return { users: seedUsers, cars: seedCars, bookings: seedBookings };
 }
 
-let users, cars, bookings;
+// ─── In-place population helpers ─────────────────────────────
+function populateUsers(data) {
+    users.length = 0;
+    users.push(...data);
+}
 
-if (fs.existsSync(DATA_FILE)) {
+function populateCars(data) {
+    Object.keys(cars).forEach(k => delete cars[k]);
+    Object.assign(cars, data);
+}
+
+function populateBookings(data) {
+    Object.keys(bookings).forEach(k => delete bookings[k]);
+    Object.assign(bookings, data);
+}
+
+// ─── Save to MongoDB ──────────────────────────────────────────
+async function saveData() {
+    if (!db) return;
     try {
-        const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-        const saved = JSON.parse(raw);
-        users = saved.users || [];
-        cars = saved.cars || {};
-        bookings = saved.bookings || {};
-        console.log('📂 Loaded data from db.json');
+        await usersCol.replaceOne({ _id: 'state' }, { _id: 'state', data: users }, { upsert: true });
+        await carsCol.replaceOne({ _id: 'state' }, { _id: 'state', data: cars }, { upsert: true });
+        await bookingsCol.replaceOne({ _id: 'state' }, { _id: 'state', data: bookings }, { upsert: true });
     } catch (err) {
-        console.error('⚠️  Failed to read db.json, using seed data:', err.message);
+        console.error('⚠️  Failed to save to MongoDB:', err.message);
+    }
+}
+
+// ─── Connect & Init ───────────────────────────────────────────
+async function initDB() {
+    await client.connect();
+    db = client.db('zion-fleet');
+    usersCol = db.collection('users');
+    carsCol = db.collection('cars');
+    bookingsCol = db.collection('bookings');
+    console.log('✅ Connected to MongoDB');
+
+    const usersDoc = await usersCol.findOne({ _id: 'state' });
+    const carsDoc = await carsCol.findOne({ _id: 'state' });
+    const bookingsDoc = await bookingsCol.findOne({ _id: 'state' });
+
+    if (usersDoc && carsDoc && bookingsDoc) {
+        populateUsers(usersDoc.data || []);
+        populateCars(carsDoc.data || {});
+        populateBookings(bookingsDoc.data || {});
+        console.log('📂 Loaded data from MongoDB');
+    } else {
+        console.log('🌱 No data found in MongoDB, seeding...');
         const seed = createSeedData();
-        users = seed.users; cars = seed.cars; bookings = seed.bookings;
+        populateUsers(seed.users);
+        populateCars(seed.cars);
+        populateBookings(seed.bookings);
+        await saveData();
+        console.log('✅ Seed data saved to MongoDB');
     }
-} else {
-    console.log('🌱 No db.json found, creating with seed data');
-    const seed = createSeedData();
-    users = seed.users; cars = seed.cars; bookings = seed.bookings;
-    saveData();
-}
 
-function saveData() {
-    try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify({ users, cars, bookings }, null, 2), 'utf-8');
-    } catch (err) {
-        console.error('⚠️  Failed to save db.json:', err.message);
-    }
+    setInterval(saveData, 30000);
+    process.on('SIGINT', async () => { await saveData(); console.log('\n💾 Data saved. Bye!'); process.exit(0); });
+    process.on('SIGTERM', async () => { await saveData(); process.exit(0); });
 }
-
-setInterval(saveData, 30000);
-process.on('SIGINT', () => { saveData(); console.log('\n💾 Data saved. Bye!'); process.exit(0); });
-process.on('SIGTERM', () => { saveData(); process.exit(0); });
 
 function ensureUser(userId) {
     if (!cars[userId]) cars[userId] = [];
     if (!bookings[userId]) bookings[userId] = [];
 }
 
-module.exports = { users, cars, bookings, ensureUser, saveData };
+module.exports = { users, cars, bookings, ensureUser, saveData, initDB };
