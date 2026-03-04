@@ -123,20 +123,47 @@ app.get('/api/bookings', authMiddleware, (req, res) => {
     res.json(enriched);
 });
 app.post('/api/bookings', authMiddleware, (req, res) => {
-    const { carId, customerName, customerPhone, startDate, endDate, discount } = req.body;
+    const { carId, customerName, customerPhone, startDate, endDate, discount, paymentMethod, amountPaid } = req.body;
     if (!carId || !customerName || !startDate || !endDate) return res.status(400).json({ error: 'carId, customerName, startDate, endDate are required' });
     const userCars = cars[req.userId];
     const car = userCars.find(c => c.id === carId);
     if (!car) return res.status(404).json({ error: 'Car not found' });
-    if (car.status !== 'available') return res.status(400).json({ error: 'Car is not available for booking' });
-    const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)));
+    if (car.status === 'maintenance') return res.status(400).json({ error: 'Car is under maintenance' });
+
+    // Date-range overlap check: new booking conflicts if newStart < existingEnd AND newEnd > existingStart
+    // This means a checkout date (endDate) on the same day as a new booking's startDate is allowed
+    const newStart = new Date(startDate);
+    const newEnd = new Date(endDate);
+    const userBookings = bookings[req.userId] || [];
+    const conflict = userBookings.find(b =>
+        b.carId === carId &&
+        b.status === 'active' &&
+        newStart < new Date(b.endDate) &&
+        newEnd > new Date(b.startDate)
+    );
+    if (conflict) return res.status(400).json({ error: `Car is already booked from ${conflict.startDate} to ${conflict.endDate}` });
+
+    const days = Math.max(1, Math.ceil((newEnd - newStart) / (1000 * 60 * 60 * 24)));
     const subtotal = days * car.dailyRate;
     const discountPct = Math.min(100, Math.max(0, Number(discount) || 0));
     const discountAmount = Math.round(subtotal * discountPct / 100);
     const totalAmount = subtotal - discountAmount;
-    const newBooking = { id: uuidv4(), carId, customerName, customerPhone: customerPhone || '', startDate, endDate, totalAmount, discount: discountPct, discountAmount, status: 'active', createdAt: new Date().toISOString() };
+
+    // Payment
+    const method = paymentMethod || 'full';
+    let paid = method === 'full' ? totalAmount : Math.max(0, Math.min(totalAmount, Number(amountPaid) || 0));
+    const balance = totalAmount - paid;
+
+    const newBooking = {
+        id: uuidv4(), carId, customerName, customerPhone: customerPhone || '',
+        startDate, endDate, totalAmount, discount: discountPct, discountAmount,
+        paymentMethod: method, amountPaid: paid, balance,
+        status: 'active', createdAt: new Date().toISOString()
+    };
     bookings[req.userId].push(newBooking);
-    car.status = 'booked';
+    // Only flip car status to 'booked' if it starts today or earlier (simple heuristic)
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (newStart <= today) car.status = 'booked';
     saveData();
     res.status(201).json({ ...newBooking, carName: `${car.make} ${car.model}`, carPlate: car.plate });
 });

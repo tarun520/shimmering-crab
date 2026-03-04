@@ -63,8 +63,26 @@ import { Booking, Car } from '../../models/fleet.models';
           <div><div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Plate</div><div style="color:#e2e8f0;font-size:0.9rem;margin-top:2px;font-family:monospace">{{ b.carPlate }}</div></div>
           <div><div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Period</div><div style="color:#e2e8f0;font-size:0.9rem;margin-top:2px">{{ fmt(b.startDate) }} → {{ fmt(b.endDate) }}</div></div>
           <div><div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Duration</div><div style="color:#e2e8f0;font-size:0.9rem;margin-top:2px">{{ days(b.startDate,b.endDate) }} days</div></div>
-          <div><div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Amount</div><div style="color:#22c55e;font-size:1rem;font-weight:700;margin-top:2px">₹{{ b.totalAmount | number }}</div></div>
+          <div><div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Total</div><div style="color:#22c55e;font-size:1rem;font-weight:700;margin-top:2px">₹{{ b.totalAmount | number }}</div></div>
           <div *ngIf="(b.discount ?? 0) > 0"><div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Discount</div><div style="color:#22c55e;font-size:0.9rem;font-weight:600;margin-top:2px">{{ b.discount }}% off</div></div>
+          <div *ngIf="b.paymentMethod">
+            <div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Payment</div>
+            <div style="margin-top:4px">
+              <span style="padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;text-transform:capitalize"
+                [style.background]="b.paymentMethod==='full'?'rgba(34,197,94,0.15)':b.paymentMethod==='advance'?'rgba(251,191,36,0.15)':'rgba(245,158,11,0.15)'"
+                [style.color]="b.paymentMethod==='full'?'#22c55e':b.paymentMethod==='advance'?'#fbbf24':'#f59e0b'">
+                {{ b.paymentMethod === 'full' ? 'Full' : b.paymentMethod === 'advance' ? 'Advance' : 'Partial' }}
+              </span>
+            </div>
+          </div>
+          <div *ngIf="b.paymentMethod && b.paymentMethod !== 'full'">
+            <div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Paid</div>
+            <div style="color:#e2e8f0;font-size:0.9rem;margin-top:2px">₹{{ (b.amountPaid ?? 0) | number }}</div>
+          </div>
+          <div *ngIf="b.paymentMethod && b.paymentMethod !== 'full' && (b.balance ?? 0) > 0">
+            <div style="color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">Balance Due</div>
+            <div style="color:#f87171;font-size:0.9rem;font-weight:600;margin-top:2px">₹{{ (b.balance ?? 0) | number }}</div>
+          </div>
         </div>
       </div>
 
@@ -103,6 +121,30 @@ import { Booking, Car } from '../../models/fleet.models';
             </div>
           </div>
 
+          <!-- Payment Method -->
+          <div>
+            <label class="flabel">Payment Method</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div *ngFor="let pm of paymentMethods" (click)="form.paymentMethod=pm.value"
+                style="flex:1;min-width:90px;padding:10px 8px;border-radius:10px;cursor:pointer;text-align:center;transition:all 0.2s;font-size:0.82rem;font-weight:500"
+                [style.background]="form.paymentMethod===pm.value ? pm.activeBg : 'rgba(255,255,255,0.04)'"
+                [style.border]="form.paymentMethod===pm.value ? ('1px solid ' + pm.activeColor) : '1px solid rgba(255,255,255,0.1)'"
+                [style.color]="form.paymentMethod===pm.value ? pm.activeColor : '#94a3b8'">
+                <span class="material-icons-round" style="font-size:16px;display:block;margin-bottom:2px">{{ pm.icon }}</span>
+                {{ pm.label }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Amount Paid (for advance/partial) -->
+          <div *ngIf="form.paymentMethod==='advance' || form.paymentMethod==='partial'">
+            <label class="flabel">Amount Paid <span style="font-size:0.7rem;color:#64748b;font-style:italic">(advance received)</span></label>
+            <div style="position:relative;display:flex;align-items:center">
+              <span style="position:absolute;left:12px;color:#64748b;font-weight:600;font-size:14px">₹</span>
+              <input type="number" min="0" [(ngModel)]="form.amountPaid" placeholder="0" class="finput" style="padding-left:32px">
+            </div>
+          </div>
+
           <!-- Estimate -->
           <div *ngIf="subtotal > 0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px">
             <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:0.85rem;margin-bottom:8px"><span>Daily Rate</span><span>₹{{ carRate() | number }}</span></div>
@@ -110,6 +152,13 @@ import { Booking, Car } from '../../models/fleet.models';
             <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:0.85rem;margin-bottom:8px"><span>Subtotal</span><span>₹{{ subtotal | number }}</span></div>
             <div *ngIf="form.discount > 0" style="display:flex;justify-content:space-between;color:#22c55e;font-size:0.85rem;margin-bottom:8px"><span>Discount ({{ form.discount }}%)</span><span>-₹{{ discountAmt() | number }}</span></div>
             <div style="display:flex;justify-content:space-between;color:white;font-weight:700;font-size:1rem;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1)"><span>Total</span><span>₹{{ total() | number }}</span></div>
+            <ng-container *ngIf="form.paymentMethod==='advance' || form.paymentMethod==='partial'">
+              <div style="display:flex;justify-content:space-between;color:#22c55e;font-size:0.85rem;margin-top:8px"><span>Paid Now</span><span>₹{{ paidNow() | number }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:0.9rem;font-weight:600;margin-top:4px"
+                [style.color]="balanceAmt()>0?'#f87171':'#22c55e'">
+                <span>Balance Due</span><span>₹{{ balanceAmt() | number }}</span>
+              </div>
+            </ng-container>
           </div>
         </div>
         <div style="display:flex;gap:10px;margin-top:20px">
@@ -153,6 +202,12 @@ export class BookingsComponent implements OnInit {
   confirmId: string | null = null;
   form: any = this.emptyForm();
 
+  paymentMethods = [
+    { value: 'full', label: 'Full', icon: 'payments', activeBg: 'rgba(34,197,94,0.12)', activeColor: '#22c55e' },
+    { value: 'advance', label: 'Advance', icon: 'account_balance_wallet', activeBg: 'rgba(251,191,36,0.12)', activeColor: '#fbbf24' },
+    { value: 'partial', label: 'Partial', icon: 'receipt_long', activeBg: 'rgba(249,115,22,0.12)', activeColor: '#f97316' },
+  ];
+
   constructor(private bookingService: BookingService, private carService: CarService) { }
   ngOnInit() { this.load(); }
   load() { this.loading = true; this.bookingService.getBookings().subscribe({ next: d => { this.bookings = d; this.loading = false; }, error: () => this.loading = false }); }
@@ -166,11 +221,13 @@ export class BookingsComponent implements OnInit {
   carRate() { const c = this.availableCars.find(c => c.id === this.form.carId); return c ? c.dailyRate : 0; }
   discountAmt() { return Math.round(this.subtotal * Math.min(100, Math.max(0, this.form.discount || 0)) / 100); }
   total() { return this.subtotal - this.discountAmt(); }
+  paidNow() { return this.form.paymentMethod === 'full' ? this.total() : Math.min(this.total(), Math.max(0, Number(this.form.amountPaid) || 0)); }
+  balanceAmt() { return this.total() - this.paidNow(); }
 
-  emptyForm() { return { carId: '', customerName: '', customerPhone: '', startDate: new Date().toISOString().split('T')[0], endDate: '', discount: 0 }; }
+  emptyForm() { return { carId: '', customerName: '', customerPhone: '', startDate: new Date().toISOString().split('T')[0], endDate: '', discount: 0, paymentMethod: 'full', amountPaid: 0 }; }
 
   openModal() {
-    this.carService.getCars().subscribe({ next: cars => { this.availableCars = cars.filter(c => c.status === 'available'); } });
+    this.carService.getCars().subscribe({ next: cars => { this.availableCars = cars; } });
     this.form = this.emptyForm();
     this.showModal = true;
   }
@@ -178,7 +235,7 @@ export class BookingsComponent implements OnInit {
 
   createBooking() {
     if (!this.form.carId || !this.form.customerName || !this.form.startDate || !this.form.endDate) return;
-    this.bookingService.createBooking(this.form).subscribe({ next: () => { this.closeModal(); this.load(); } });
+    this.bookingService.createBooking(this.form).subscribe({ next: () => { this.closeModal(); this.load(); }, error: (err: any) => { alert(err?.error?.error || 'Booking failed'); } });
   }
 
   cancelConfirm() { this.confirmId = null; }
@@ -312,12 +369,10 @@ export class BookingsComponent implements OnInit {
       <div class="summary-row"><span>Sub Total</span><span>₹ ${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
       <div class="summary-row"><span>Discount</span><span>₹ ${discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
       <div class="summary-row total"><span>Total</span><span>₹ ${b.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row"><span>Received</span><span>₹ ${b.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row"><span>Balance</span><span>₹ 0.00</span></div>
+      <div class="summary-row"><span>Received</span><span>₹ ${(b.amountPaid ?? b.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+      <div class="summary-row" style="${(b.balance ?? 0) > 0 ? 'color:#dc2626;font-weight:600' : ''}"><span>Balance Due</span><span>₹ ${(b.balance ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
       <div class="summary-row"><span>You Saved</span><span>₹ ${discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row"><span>Payment Mode</span><span>Zion Car Rentals</span></div>
-      <div class="summary-row"><span>Previous Balance</span><span>₹ 0.00</span></div>
-      <div class="summary-row"><span>Current Balance</span><span>₹ 0.00</span></div>
+      <div class="summary-row"><span>Payment Mode</span><span style="text-transform:capitalize">${b.paymentMethod === 'full' ? 'Full Payment' : b.paymentMethod === 'advance' ? 'Advance Payment' : b.paymentMethod === 'partial' ? 'Partial Payment' : 'Cash'}</span></div>
     </div>
   </div>
   <div class="footer">

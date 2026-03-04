@@ -22,6 +22,9 @@ export interface Booking {
     totalAmount: number;
     discount?: number;
     discountAmount?: number;
+    paymentMethod?: 'full' | 'advance' | 'partial';
+    amountPaid?: number;
+    balance?: number;
     status: 'active' | 'completed';
     createdAt: string;
     carName?: string;
