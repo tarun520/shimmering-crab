@@ -278,71 +278,81 @@ export class BookingsComponent implements OnInit {
 
   downloadBill(b: Booking) {
     const duration = this.days(b.startDate, b.endDate);
-    // If we have discountAmount stored use it, otherwise compute from discount %
     const subtotal = b.discountAmount != null
       ? b.totalAmount + b.discountAmount
       : b.totalAmount;
     const discountAmt = b.discountAmount ?? 0;
+    const additionalCharges = 0;
+    const totalWithCharges = b.totalAmount + additionalCharges;
+    const received = b.amountPaid ?? (b.paymentMethod === 'full' ? totalWithCharges : 0);
+    const balance = (b.balance ?? totalWithCharges - received);
+    const previousBalance = 0;
+    const currentBalance = balance;
     const invoiceNo = Math.floor(Math.random() * 900) + 100;
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
     const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    const amountInWords = this.numToWords(b.totalAmount);
+    const amountInWords = this.numToWords(totalWithCharges);
+    const pricePerUnit = (subtotal / duration);
+    const discountPct = b.discount ?? (subtotal > 0 ? Math.round((discountAmt / subtotal) * 100) : 0);
+    const paymentModeLabel = b.paymentMethod === 'full' ? 'Full Payment' : b.paymentMethod === 'advance' ? 'Advance' : b.paymentMethod === 'partial' ? 'Partial' : 'Zion Car Rentals';
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Invoice – ${b.customerName}</title>
+<title>Tax Invoice – ${b.customerName}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Inter',sans-serif;color:#1a1a1a;background:#fff;font-size:13px;}
-  .page{max-width:780px;margin:0 auto;padding:32px 40px;}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid #0891b2;margin-bottom:16px;}
-  .company-name{font-size:18px;font-weight:700;text-transform:uppercase;margin-bottom:4px;}
-  .company-detail{font-size:11px;color:#444;line-height:1.6;}
-  .logo{width:72px;height:72px;border:2px solid #0891b2;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#0891b2;text-align:center;line-height:1.3;flex-shrink:0;}
+  .page{max-width:780px;margin:0 auto;padding:28px 40px;}
+  .top-signatory{text-align:right;margin-bottom:10px;}
+  .top-signatory .for{font-size:11px;font-weight:600;color:#1e293b;}
+  .top-signatory .auth{font-size:11px;font-weight:700;color:#1e293b;border-top:1px solid #1e293b;padding-top:4px;display:inline-block;}
+  .signature-block{margin-top:20px;text-align:right;}
+  .signature-block .sign-img{margin-bottom:6px;}
+  .signature-block .auth{font-size:11px;font-weight:700;color:#1e293b;border-top:1px solid #1e293b;padding-top:4px;display:inline-block;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:12px;border-bottom:2px solid #1e3a5f;margin-bottom:14px;}
+  .company-block .company-name{font-size:18px;font-weight:700;color:#1e3a5f;margin-bottom:6px;}
+  .company-detail{font-size:11px;color:#334155;line-height:1.65;}
+  .logo{width:72px;height:72px;border:2px solid #1e3a5f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#1e3a5f;text-align:center;line-height:1.3;flex-shrink:0;}
   .bill-logo{height:72px;width:auto;object-fit:contain;flex-shrink:0;}
-  .stamp-wrap{width:88px;height:88px;border-radius:50%;overflow:hidden;margin-left:auto;margin-bottom:6px;flex-shrink:0;}
-  .stamp-wrap .stamp-img{width:100%;height:100%;object-fit:cover;object-position:center;}
-  .invoice-title{text-align:center;font-size:18px;font-weight:700;color:#0891b2;margin-bottom:16px;text-decoration:underline;text-underline-offset:4px;}
-  .bill-row{display:flex;justify-content:space-between;margin-bottom:20px;}
-  .bill-to h4{font-size:11px;font-weight:600;margin-bottom:4px;}
-  .bill-to p{font-size:12px;color:#222;font-weight:600;margin-bottom:2px;}
-  .bill-to span{font-size:11px;color:#444;display:block;}
+  .invoice-title{text-align:center;font-size:20px;font-weight:700;color:#1e3a5f;margin-bottom:16px;text-decoration:underline;text-underline-offset:5px;}
+  .bill-row{display:flex;justify-content:space-between;margin-bottom:18px;}
+  .bill-to h4{font-size:11px;font-weight:600;color:#1e3a5f;margin-bottom:6px;}
+  .bill-to .customer-name{font-size:13px;color:#0f172a;font-weight:600;margin-bottom:2px;}
+  .bill-to .contact-label{font-size:11px;color:#475569;}
   .invoice-details{text-align:right;}
-  .invoice-details h4{font-size:11px;font-weight:600;margin-bottom:4px;}
-  .invoice-details p{font-size:11px;color:#444;}
-  table{width:100%;border-collapse:collapse;margin-bottom:20px;}
-  thead tr{background:#0891b2;color:white;}
-  thead th{padding:9px 11px;text-align:left;font-size:11px;font-weight:600;}
-  thead th:last-child,thead th:nth-child(3),thead th:nth-child(4),thead th:nth-child(5){text-align:right;}
-  tbody td{padding:9px 11px;border-bottom:1px solid #e5e7eb;font-size:12px;}
-  tbody td:last-child,tbody td:nth-child(3),tbody td:nth-child(4),tbody td:nth-child(5){text-align:right;}
-  .total-row td{font-weight:600;border-top:2px solid #0891b2;border-bottom:none;background:#f8fafc;}
-  .section{display:flex;gap:32px;margin-bottom:24px;}
+  .invoice-details h4{font-size:11px;font-weight:600;color:#1e3a5f;margin-bottom:6px;}
+  .invoice-details p{font-size:11px;color:#334155;}
+  table{width:100%;border-collapse:collapse;margin-bottom:18px;}
+  thead tr{background:#1e3a5f;color:#fff;}
+  thead th{padding:10px 12px;text-align:left;font-size:11px;font-weight:600;}
+  thead th:last-child,thead th:nth-child(3),thead th:nth-child(4),thead th:nth-child(5),thead th:nth-child(6){text-align:right;}
+  tbody td{padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#334155;}
+  tbody td:last-child,tbody td:nth-child(3),tbody td:nth-child(4),tbody td:nth-child(5),tbody td:nth-child(6){text-align:right;}
+  .total-row td{font-weight:600;border-top:2px solid #1e3a5f;border-bottom:none;background:#f1f5f9;color:#0f172a;}
+  .section{display:flex;justify-content:space-between;gap:32px;margin-bottom:22px;}
   .left-col{flex:1;}
-  .right-col{width:300px;flex-shrink:0;}
-  .amount-words h4{font-size:11px;font-weight:600;margin-bottom:4px;}
-  .amount-words p{font-size:12px;font-weight:600;}
-  .terms h4{font-size:11px;font-weight:600;margin:12px 0 4px;}
-  .terms p{font-size:11px;color:#555;}
-  .summary-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid #f0f0f0;}
-  .summary-row.total{background:#0891b2;color:white;padding:8px 10px;font-weight:700;font-size:13px;border-radius:4px;border-bottom:none;margin:4px 0;}
-  .footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:16px;border-top:1px solid #e5e7eb;margin-top:8px;}
-  .bank h4{font-size:11px;font-weight:700;margin-bottom:4px;}
-  .bank p{font-size:11px;color:#444;line-height:1.7;}
-  .signatory{text-align:right;}
-  .signatory p{font-size:11px;color:#444;}
-  .signatory .for{font-size:11px;font-weight:600;margin-bottom:32px;}
-  .signatory .auth{font-size:11px;font-weight:700;border-top:1px solid #222;padding-top:4px;display:inline-block;}
+  .right-col{width:280px;flex-shrink:0;}
+  .amount-words h4{font-size:11px;font-weight:600;color:#1e3a5f;margin-bottom:4px;}
+  .amount-words p{font-size:12px;font-weight:600;color:#0f172a;}
+  .terms h4{font-size:11px;font-weight:600;color:#1e3a5f;margin:12px 0 4px;}
+  .terms p{font-size:11px;color:#475569;}
+  .summary-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid #e2e8f0;color:#334155;}
+  .summary-row span:last-child{font-weight:500;}
+  .summary-row.total{background:#1e3a5f;color:#fff;padding:10px 12px;font-weight:700;font-size:14px;border-radius:4px;border-bottom:none;margin:6px 0;}
+  .footer{display:flex;justify-content:space-between;align-items:flex-start;padding-top:16px;border-top:1px solid #e2e8f0;margin-top:12px;}
+  .bank h4{font-size:11px;font-weight:700;color:#1e3a5f;margin-bottom:6px;}
+  .bank p{font-size:11px;color:#334155;line-height:1.7;}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
 </style></head><body><div class="page">
   <div class="header">
-    <div>
-      <div class="company-name">Zion Car Rental Service</div>
+    <div class="company-block">
+      <div class="company-name">ZION CAR RENTAL SERVICE</div>
       <div class="company-detail">
-        Phone no.: +91 9100664083<br>
+        8,5,199 mallika arjuna colony old bowenpally telangana<br>
+        Phone no.: 9100664083<br>
         Email: zioncarrentals90@gmail.com<br>
-        State: Telangana
+        State: 36-Telangana
       </div>
     </div>
     ${this.logoBase64 ? `<img src="${this.logoBase64}" alt="ZION CAR RENTALS" class="bill-logo">` : '<div class="logo">ZION<br>CAR<br>RENTALS</div>'}
@@ -351,8 +361,8 @@ export class BookingsComponent implements OnInit {
   <div class="bill-row">
     <div class="bill-to">
       <h4>Bill To</h4>
-      <p>${b.customerName}</p>
-      <span>${b.customerPhone || 'N/A'}</span>
+      <p class="customer-name">${b.customerName}</p>
+      <span class="contact-label">Contact No.: ${b.customerPhone || '—'}</span>
     </div>
     <div class="invoice-details">
       <h4>Invoice Details</h4>
@@ -363,22 +373,22 @@ export class BookingsComponent implements OnInit {
   </div>
   <table>
     <thead><tr>
-      <th>#</th><th>Item Name</th><th>Quantity</th><th>Price / Unit</th><th>Discount</th><th>Amount</th>
+      <th>#</th><th>Item Name</th><th>Quantity</th><th>Price/ Unit</th><th>Discount</th><th>Amount</th>
     </tr></thead>
     <tbody>
       <tr>
         <td>1</td>
-        <td>${b.carName ?? 'Vehicle'}<br><span style="font-size:10px;color:#888">${b.carPlate ?? ''} · ${b.startDate} → ${b.endDate}</span></td>
-        <td>${duration} day${duration > 1 ? 's' : ''}</td>
-        <td>₹ ${(subtotal / duration).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-        <td>${discountAmt > 0 ? '₹ ' + discountAmt.toLocaleString('en-IN') + '<br><span style="font-size:10px;color:#888">(' + (b.discount ?? 0) + '%)</span>' : '—'}</td>
+        <td>${b.carName ?? 'Vehicle'}</td>
+        <td>${duration}</td>
+        <td>₹ ${pricePerUnit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        <td>${discountAmt > 0 ? '₹ ' + discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 }) + ' (' + discountPct + '%)' : '—'}</td>
         <td>₹ ${b.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       </tr>
       <tr class="total-row">
-        <td colspan="2"><strong>Total</strong></td>
+        <td colspan="2">Total</td>
         <td>${duration}</td>
         <td></td>
-        <td>₹ ${discountAmt.toLocaleString('en-IN')}</td>
+        <td>₹ ${discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
         <td>₹ ${b.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       </tr>
     </tbody>
@@ -395,13 +405,20 @@ export class BookingsComponent implements OnInit {
       </div>
     </div>
     <div class="right-col">
-      <div class="summary-row"><span>Sub Total</span><span>₹ ${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row"><span>Discount</span><span>₹ ${discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row total"><span>Total</span><span>₹ ${b.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row"><span>Received</span><span>₹ ${(b.amountPaid ?? b.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row" style="${(b.balance ?? 0) > 0 ? 'color:#dc2626;font-weight:600' : ''}"><span>Balance Due</span><span>₹ ${(b.balance ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row"><span>You Saved</span><span>₹ ${discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-      <div class="summary-row"><span>Payment Mode</span><span style="text-transform:capitalize">${b.paymentMethod === 'full' ? 'Full Payment' : b.paymentMethod === 'advance' ? 'Advance Payment' : b.paymentMethod === 'partial' ? 'Partial Payment' : 'Cash'}</span></div>
+    <div class="summary-row"><span>Sub Total</span><span>₹ ${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+    <div class="summary-row"><span>Discount</span><span>₹ ${discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+    <div class="summary-row"><span>Additional charges 1</span><span>₹ ${additionalCharges.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+    <div class="summary-row total"><span>Total</span><span>₹ ${totalWithCharges.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+    <div class="summary-row"><span>Received</span><span>₹ ${received.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+    <div class="summary-row" style="${currentBalance > 0 ? 'color:#b91c1c;font-weight:600' : ''}"><span>Balance</span><span>₹ ${currentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+    <div class="summary-row"><span>You Saved</span><span>₹ ${discountAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+    <div class="summary-row"><span>Payment Mode</span><span>${paymentModeLabel}</span></div>
+    <div class="summary-row"><span>Previous Balance</span><span>₹ ${previousBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+    <div class="summary-row" style="font-weight:600"><span>Current Balance</span><span>₹ ${currentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+<div class="signature-block" style="display: flex; flex-direction: column; align-items: flex-end;">
+  ${this.signatureBase64 ? `<img style="display: block; width: 70px; height: 70px; object-fit: contain; margin-bottom: 4px;" src="${this.signatureBase64}" alt="Signature">` : ''}
+  <p style="margin: 0;" class="auth">Authorized Signatory</p>
+</div>
     </div>
   </div>
   <div class="footer">
@@ -410,10 +427,7 @@ export class BookingsComponent implements OnInit {
       <p>Bank Name: Trimulgherry<br>
       Bank Account No.: 50200095949960<br>
       Bank IFSC code: HDFC0006957<br>
-      Account Holder's Name: Zion Car Rental Service.</p>
-    </div>
-    <div class="signatory">
-      ${this.signatureBase64 ? `<p class="for">For: ZION CAR RENTAL SERVICE</p><div class="stamp-wrap"><img src="${this.signatureBase64}" alt="Stamp" class="stamp-img"></div><p class="auth">Authorized Signatory</p>` : '<p class="for">For: ZION CAR RENTAL SERVICE</p><p class="auth">Authorized Signatory</p>'}
+      Account Holder's Name: Zion Car Rental<br>Service.</p>
     </div>
   </div>
 </div><script>window.onload=function(){window.print();}<\/script></body></html>`;
