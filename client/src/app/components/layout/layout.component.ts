@@ -18,7 +18,7 @@ import { AuthService } from '../../services/auth.service';
       <nav class="sidebar" [class.open]="sidebarOpen">
         <div class="sidebar-header">
           <div class="logo-wrap">
-            <div class="logo-icon"><span class="material-icons-round">directions_car</span></div>
+            <img src="assets/logo.png" alt="ZION CAR RENTALS" class="logo-img">
             <div><div class="logo-name">ZION</div><div class="logo-sub">CAR RENTALS</div></div>
           </div>
           <button class="btn-icon close-btn" (click)="sidebarOpen=false"><span class="material-icons-round">close</span></button>
@@ -66,8 +66,7 @@ import { AuthService } from '../../services/auth.service';
     .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .sidebar-header { padding: 20px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.07); }
     .logo-wrap { display: flex; align-items: center; gap: 12px; }
-    .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg,#3b82f6,#1d4ed8); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    .logo-icon .material-icons-round { color: white; font-size: 22px; }
+    .logo-img { height: 40px; width: auto; object-fit: contain; }
     .logo-name { font-weight: 700; font-size: 1rem; letter-spacing: 3px; color: white; }
     .logo-sub { font-size: 0.65rem; color: #64748b; letter-spacing: 1px; }
     .close-btn { display: none; }

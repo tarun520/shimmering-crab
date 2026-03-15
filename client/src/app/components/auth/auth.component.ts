@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
     <div class="auth-bg">
       <div class="auth-card">
         <div class="auth-logo">
-          <span class="material-icons-round">directions_car</span>
+          <img src="assets/logo.png" alt="ZION CAR RENTALS" class="auth-logo-img">
         </div>
         <h1>ZION</h1>
         <p class="sub">Car Rentals Fleet Management</p>
@@ -52,9 +52,8 @@ import { AuthService } from '../../services/auth.service';
       background: radial-gradient(ellipse at 60% 40%, #1a2a6c 0%, #0a0f1e 70%); font-family: 'Inter', sans-serif; }
     .auth-card { background: rgba(15,20,40,0.95); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px;
       padding: 40px; width: 420px; max-width: 95vw; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.6); }
-    .auth-logo { width: 64px; height: 64px; background: linear-gradient(135deg,#3b82f6,#1d4ed8); border-radius: 16px;
-      display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-    .auth-logo .material-icons-round { color: white; font-size: 32px; }
+    .auth-logo { width: 180px; height: 64px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .auth-logo-img { max-width: 100%; max-height: 100%; object-fit: contain; }
     h1 { color: white; font-size: 2rem; font-weight: 700; letter-spacing: 4px; }
     .sub { color: #64748b; font-size: 0.85rem; margin-top: 4px; margin-bottom: 24px; }
     .tabs { display: flex; gap: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 4px; margin-bottom: 24px; }

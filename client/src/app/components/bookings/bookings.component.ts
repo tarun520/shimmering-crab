@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { BookingService } from '../../services/booking.service';
 import { CarService } from '../../services/car.service';
 import { Booking, Car } from '../../models/fleet.models';
@@ -201,6 +202,8 @@ export class BookingsComponent implements OnInit {
   showModal = false;
   confirmId: string | null = null;
   form: any = this.emptyForm();
+  logoBase64 = '';
+  signatureBase64 = '';
 
   paymentMethods = [
     { value: 'full', label: 'Full', icon: 'payments', activeBg: 'rgba(34,197,94,0.12)', activeColor: '#22c55e' },
@@ -208,8 +211,31 @@ export class BookingsComponent implements OnInit {
     { value: 'partial', label: 'Partial', icon: 'receipt_long', activeBg: 'rgba(249,115,22,0.12)', activeColor: '#f97316' },
   ];
 
-  constructor(private bookingService: BookingService, private carService: CarService) { }
-  ngOnInit() { this.load(); }
+  constructor(
+    private bookingService: BookingService,
+    private carService: CarService,
+    private http: HttpClient
+  ) {}
+
+  ngOnInit() {
+    this.load();
+    this.loadBillImages();
+  }
+
+  private loadBillImages() {
+    const toBase64 = (url: string) =>
+      this.http.get(url, { responseType: 'blob' }).toPromise().then(blob => {
+        if (!blob) return '';
+        return new Promise<string>((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res((r.result as string) || '');
+          r.onerror = rej;
+          r.readAsDataURL(blob);
+        });
+      }).catch(() => '');
+    toBase64('assets/logo.png').then(b => { this.logoBase64 = b; });
+    toBase64('assets/signature.png').then(b => { this.signatureBase64 = b; });
+  }
   load() { this.loading = true; this.bookingService.getBookings().subscribe({ next: d => { this.bookings = d; this.loading = false; }, error: () => this.loading = false }); }
 
   get filtered() { return this.filter === 'all' ? this.bookings : this.bookings.filter(b => b.status === this.filter); }
@@ -274,6 +300,9 @@ export class BookingsComponent implements OnInit {
   .company-name{font-size:18px;font-weight:700;text-transform:uppercase;margin-bottom:4px;}
   .company-detail{font-size:11px;color:#444;line-height:1.6;}
   .logo{width:72px;height:72px;border:2px solid #0891b2;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#0891b2;text-align:center;line-height:1.3;flex-shrink:0;}
+  .bill-logo{height:72px;width:auto;object-fit:contain;flex-shrink:0;}
+  .stamp-wrap{width:88px;height:88px;border-radius:50%;overflow:hidden;margin-left:auto;margin-bottom:6px;flex-shrink:0;}
+  .stamp-wrap .stamp-img{width:100%;height:100%;object-fit:cover;object-position:center;}
   .invoice-title{text-align:center;font-size:18px;font-weight:700;color:#0891b2;margin-bottom:16px;text-decoration:underline;text-underline-offset:4px;}
   .bill-row{display:flex;justify-content:space-between;margin-bottom:20px;}
   .bill-to h4{font-size:11px;font-weight:600;margin-bottom:4px;}
@@ -316,7 +345,7 @@ export class BookingsComponent implements OnInit {
         State: Telangana
       </div>
     </div>
-    <div class="logo">ZION<br>CAR<br>RENTALS</div>
+    ${this.logoBase64 ? `<img src="${this.logoBase64}" alt="ZION CAR RENTALS" class="bill-logo">` : '<div class="logo">ZION<br>CAR<br>RENTALS</div>'}
   </div>
   <div class="invoice-title">Tax Invoice</div>
   <div class="bill-row">
@@ -384,8 +413,7 @@ export class BookingsComponent implements OnInit {
       Account Holder's Name: Zion Car Rental Service.</p>
     </div>
     <div class="signatory">
-      <p class="for">For: ZION CAR RENTAL SERVICE</p>
-      <p class="auth">Authorized Signatory</p>
+      ${this.signatureBase64 ? `<p class="for">For: ZION CAR RENTAL SERVICE</p><div class="stamp-wrap"><img src="${this.signatureBase64}" alt="Stamp" class="stamp-img"></div><p class="auth">Authorized Signatory</p>` : '<p class="for">For: ZION CAR RENTAL SERVICE</p><p class="auth">Authorized Signatory</p>'}
     </div>
   </div>
 </div><script>window.onload=function(){window.print();}<\/script></body></html>`;
